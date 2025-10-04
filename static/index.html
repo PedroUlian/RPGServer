@@ -70,7 +70,7 @@ body {
 let username = "";
 while (!username) username = prompt("Digite seu nome de usuário:");
 
-const socket = io("https://rpgserver.onrender.com", { transports: ["websocket"] });
+const socket = io(window.location.origin, { transports: ["websocket"] });
 
 const messages = document.getElementById("messages");
 const input = document.getElementById("msg");
@@ -144,3 +144,4 @@ clearBtn.addEventListener("click", () => {
 
 </body>
 </html>
+
