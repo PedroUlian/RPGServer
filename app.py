@@ -1,17 +1,16 @@
-from flask import Flask, jsonify
+from flask import Flask
+from flask_socketio import SocketIO, send
 
 app = Flask(__name__)
+app.config["SECRET_KEY"] = "segredo_rpg"
+socketio = SocketIO(app, cors_allowed_origins="*")
 
-@app.route('/')
-def home():
-    return '<h1>Servidor Flask funcionando!</h1><p>Bem-vindo ao seu servidor web.</p>'
+# Quando um cliente envia mensagem
+@socketio.on("message")
+def handle_message(msg):
+    print("Mensagem recebida:", msg)
+    # Repassa para todos conectados
+    send(msg, broadcast=True)
 
-@app.route('/api/hello')
-def hello():
-    return jsonify({
-        'message': 'Olá do servidor Flask!',
-        'status': 'success'
-    })
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+if __name__ == "__main__":
+    socketio.run(app, host="0.0.0.0", port=5000)
