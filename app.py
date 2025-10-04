@@ -1,12 +1,12 @@
 import os
 import sqlite3
-from flask import Flask, jsonify, request
+import hashlib
+from flask import Flask, jsonify, request, session, send_from_directory
 from flask_socketio import SocketIO, send
-from flask import send_from_directory
 
+# ====== CONFIGURAÇÃO DO FLASK ======
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "segredo_rpg"
-
+app.secret_key = "segredo_rpg"
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 # ====== BANCO DE DADOS ======
@@ -15,6 +15,7 @@ DB_FILE = "chat.db"
 def init_db():
     with sqlite3.connect(DB_FILE) as conn:
         c = conn.cursor()
+        # mensagens
         c.execute("""
         CREATE TABLE IF NOT EXISTS messages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -23,9 +24,21 @@ def init_db():
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )
         """)
+        # usuários
+        c.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
+            password TEXT
+        )
+        """)
         conn.commit()
 
 init_db()
+
+# ====== FUNÇÕES AUXILIARES ======
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
 
 def save_message(user, text):
     with sqlite3.connect(DB_FILE) as conn:
@@ -40,8 +53,46 @@ def get_messages(limit=50):
         rows = c.fetchall()
         return [{"user": r[0], "text": r[1], "timestamp": r[2]} for r in rows][::-1]
 
-# ============================
+# ====== ROTAS DE LOGIN/REGISTRO ======
+@app.route("/register", methods=["POST"])
+def register():
+    data = request.json
+    username = data.get("username")
+    password = data.get("password")
+    if not username or not password:
+        return jsonify({"status":"error","msg":"Preencha todos os campos"}), 400
+    hashed = hash_password(password)
+    try:
+        with sqlite3.connect(DB_FILE) as conn:
+            c = conn.cursor()
+            c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed))
+            conn.commit()
+        return jsonify({"status":"ok"})
+    except sqlite3.IntegrityError:
+        return jsonify({"status":"error","msg":"Usuário já existe"}), 400
 
+@app.route("/login", methods=["POST"])
+def login():
+    data = request.json
+    username = data.get("username")
+    password = data.get("password")
+    hashed = hash_password(password)
+    with sqlite3.connect(DB_FILE) as conn:
+        c = conn.cursor()
+        c.execute("SELECT id FROM users WHERE username=? AND password=?", (username, hashed))
+        user = c.fetchone()
+        if user:
+            session["user"] = username
+            return jsonify({"status":"ok"})
+        else:
+            return jsonify({"status":"error","msg":"Usuário ou senha incorretos"}), 401
+
+@app.route("/logout", methods=["POST"])
+def logout():
+    session.pop("user", None)
+    return jsonify({"status":"ok"})
+
+# ====== ROTAS DO CHAT ======
 @app.route("/")
 def index():
     return send_from_directory("static", "index.html")
@@ -57,18 +108,19 @@ def clear_history():
         c.execute("DELETE FROM messages")
         conn.commit()
     socketio.emit("history_cleared")
-    return jsonify({"status": "ok"})
+    return jsonify({"status":"ok"})
 
-# SocketIO recebe mensagem
+# ====== SOCKETIO ======
 @socketio.on("message")
 def handle_message(data):
     user = data.get("user", "Anon")
     text = data.get("text", "")
     if text.strip():
         save_message(user, text)
-        print(f"Mensagem de {user}: {text}")
+        print(f"[CHAT] {user}: {text}")
         send({"user": user, "text": text}, broadcast=True)
 
+# ====== EXECUÇÃO ======
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     socketio.run(
