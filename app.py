@@ -1,35 +1,41 @@
 import os
-import sqlite3
+import hashlib
 from flask import Flask, jsonify, request, session, send_from_directory
 from flask_socketio import SocketIO, send
-import hashlib
+import psycopg2
+import psycopg2.extras
 
 # ====== CONFIGURAÇÃO DO FLASK ======
 app = Flask(__name__)
 app.secret_key = "segredo_rpg"
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# ====== BANCO DE DADOS ======
-# Use o caminho do Persistent Disk do Render
-DB_FILE = "/mnt/data/chat.db"
+# ====== CONEXÃO COM POSTGRESQL ======
+# Configure a variável de ambiente DATABASE_URL com o URL do ElephantSQL
+DB_URL = os.environ.get("DATABASE_URL")
+if not DB_URL:
+    raise Exception("Configure a variável de ambiente DATABASE_URL com o URL do banco PostgreSQL")
 
+def get_conn():
+    return psycopg2.connect(DB_URL, cursor_factory=psycopg2.extras.RealDictCursor)
+
+# ====== BANCO DE DADOS ======
 def init_db():
-    os.makedirs(os.path.dirname(DB_FILE), exist_ok=True)  # garante que a pasta exista
-    with sqlite3.connect(DB_FILE) as conn:
+    with get_conn() as conn:
         c = conn.cursor()
         # mensagens
         c.execute("""
         CREATE TABLE IF NOT EXISTS messages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user TEXT,
+            id SERIAL PRIMARY KEY,
+            username TEXT,
             text TEXT,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         """)
         # usuários
         c.execute("""
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             username TEXT UNIQUE,
             password TEXT
         )
@@ -42,18 +48,18 @@ init_db()
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
-def save_message(user, text):
-    with sqlite3.connect(DB_FILE) as conn:
+def save_message(username, text):
+    with get_conn() as conn:
         c = conn.cursor()
-        c.execute("INSERT INTO messages (user, text) VALUES (?, ?)", (user, text))
+        c.execute("INSERT INTO messages (username, text) VALUES (%s, %s)", (username, text))
         conn.commit()
 
 def get_messages(limit=50):
-    with sqlite3.connect(DB_FILE) as conn:
+    with get_conn() as conn:
         c = conn.cursor()
-        c.execute("SELECT user, text, timestamp FROM messages ORDER BY id DESC LIMIT ?", (limit,))
+        c.execute("SELECT username, text, timestamp FROM messages ORDER BY id DESC LIMIT %s", (limit,))
         rows = c.fetchall()
-        return [{"user": r[0], "text": r[1], "timestamp": r[2]} for r in rows][::-1]
+        return [{"user": r["username"], "text": r["text"], "timestamp": r["timestamp"]} for r in reversed(rows)]
 
 # ====== ROTAS DE LOGIN/REGISTRO ======
 @app.route("/register", methods=["POST"])
@@ -65,12 +71,12 @@ def register():
         return jsonify({"status":"error","msg":"Preencha todos os campos"}), 400
     hashed = hash_password(password)
     try:
-        with sqlite3.connect(DB_FILE) as conn:
+        with get_conn() as conn:
             c = conn.cursor()
-            c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed))
+            c.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, hashed))
             conn.commit()
         return jsonify({"status":"ok"})
-    except sqlite3.IntegrityError:
+    except psycopg2.errors.UniqueViolation:
         return jsonify({"status":"error","msg":"Usuário já existe"}), 400
 
 @app.route("/login", methods=["POST"])
@@ -79,9 +85,9 @@ def login():
     username = data.get("username")
     password = data.get("password")
     hashed = hash_password(password)
-    with sqlite3.connect(DB_FILE) as conn:
+    with get_conn() as conn:
         c = conn.cursor()
-        c.execute("SELECT id FROM users WHERE username=? AND password=?", (username, hashed))
+        c.execute("SELECT id FROM users WHERE username=%s AND password=%s", (username, hashed))
         user = c.fetchone()
         if user:
             session["user"] = username
@@ -105,7 +111,7 @@ def history():
 
 @app.route("/clear_history", methods=["POST"])
 def clear_history():
-    with sqlite3.connect(DB_FILE) as conn:
+    with get_conn() as conn:
         c = conn.cursor()
         c.execute("DELETE FROM messages")
         conn.commit()
@@ -115,12 +121,12 @@ def clear_history():
 # ====== SOCKETIO ======
 @socketio.on("message")
 def handle_message(data):
-    user = data.get("user", "Anon")
+    username = data.get("user", "Anon")
     text = data.get("text", "")
     if text.strip():
-        save_message(user, text)
-        print(f"[CHAT] {user}: {text}")
-        send({"user": user, "text": text}, broadcast=True)
+        save_message(username, text)
+        print(f"[CHAT] {username}: {text}")
+        send({"user": username, "text": text}, broadcast=True)
 
 # ====== EXECUÇÃO ======
 if __name__ == "__main__":
