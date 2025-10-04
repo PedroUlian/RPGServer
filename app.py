@@ -1,38 +1,35 @@
 import os
-import hashlib
+import sqlite3
 from flask import Flask, jsonify, request, session, send_from_directory
 from flask_socketio import SocketIO, send
-import psycopg2
-import psycopg2.extras
+import hashlib
 
 # ====== CONFIGURAÇÃO DO FLASK ======
 app = Flask(__name__)
 app.secret_key = "segredo_rpg"
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# ====== CONEXÃO COM POSTGRESQL ======
-DB_URL = os.environ.get("DATABASE_URL")  # Render fornece esta variável
-
-def get_conn():
-    return psycopg2.connect(DB_URL, cursor_factory=psycopg2.extras.RealDictCursor)
-
 # ====== BANCO DE DADOS ======
+# Use o caminho do Persistent Disk do Render
+DB_FILE = "/mnt/data/chat.db"
+
 def init_db():
-    with get_conn() as conn:
+    os.makedirs(os.path.dirname(DB_FILE), exist_ok=True)  # garante que a pasta exista
+    with sqlite3.connect(DB_FILE) as conn:
         c = conn.cursor()
         # mensagens
         c.execute("""
         CREATE TABLE IF NOT EXISTS messages (
-            id SERIAL PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             user TEXT,
             text TEXT,
-            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )
         """)
         # usuários
         c.execute("""
         CREATE TABLE IF NOT EXISTS users (
-            id SERIAL PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE,
             password TEXT
         )
@@ -46,17 +43,17 @@ def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
 def save_message(user, text):
-    with get_conn() as conn:
+    with sqlite3.connect(DB_FILE) as conn:
         c = conn.cursor()
-        c.execute("INSERT INTO messages (user, text) VALUES (%s, %s)", (user, text))
+        c.execute("INSERT INTO messages (user, text) VALUES (?, ?)", (user, text))
         conn.commit()
 
 def get_messages(limit=50):
-    with get_conn() as conn:
+    with sqlite3.connect(DB_FILE) as conn:
         c = conn.cursor()
-        c.execute("SELECT user, text, timestamp FROM messages ORDER BY id DESC LIMIT %s", (limit,))
+        c.execute("SELECT user, text, timestamp FROM messages ORDER BY id DESC LIMIT ?", (limit,))
         rows = c.fetchall()
-        return [{"user": r["user"], "text": r["text"], "timestamp": r["timestamp"]} for r in reversed(rows)]
+        return [{"user": r[0], "text": r[1], "timestamp": r[2]} for r in rows][::-1]
 
 # ====== ROTAS DE LOGIN/REGISTRO ======
 @app.route("/register", methods=["POST"])
@@ -68,12 +65,12 @@ def register():
         return jsonify({"status":"error","msg":"Preencha todos os campos"}), 400
     hashed = hash_password(password)
     try:
-        with get_conn() as conn:
+        with sqlite3.connect(DB_FILE) as conn:
             c = conn.cursor()
-            c.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, hashed))
+            c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed))
             conn.commit()
         return jsonify({"status":"ok"})
-    except psycopg2.errors.UniqueViolation:
+    except sqlite3.IntegrityError:
         return jsonify({"status":"error","msg":"Usuário já existe"}), 400
 
 @app.route("/login", methods=["POST"])
@@ -82,9 +79,9 @@ def login():
     username = data.get("username")
     password = data.get("password")
     hashed = hash_password(password)
-    with get_conn() as conn:
+    with sqlite3.connect(DB_FILE) as conn:
         c = conn.cursor()
-        c.execute("SELECT id FROM users WHERE username=%s AND password=%s", (username, hashed))
+        c.execute("SELECT id FROM users WHERE username=? AND password=?", (username, hashed))
         user = c.fetchone()
         if user:
             session["user"] = username
@@ -108,7 +105,7 @@ def history():
 
 @app.route("/clear_history", methods=["POST"])
 def clear_history():
-    with get_conn() as conn:
+    with sqlite3.connect(DB_FILE) as conn:
         c = conn.cursor()
         c.execute("DELETE FROM messages")
         conn.commit()
