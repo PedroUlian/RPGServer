@@ -2,10 +2,8 @@ import os
 import sqlite3
 from flask import Flask, jsonify, request
 from flask_socketio import SocketIO, send
-from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)
 app.config["SECRET_KEY"] = "segredo_rpg"
 
 socketio = SocketIO(app, cors_allowed_origins="*")
