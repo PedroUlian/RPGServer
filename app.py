@@ -47,7 +47,7 @@ def index():
     return "Servidor RPG Chat rodando!"
 
 @app.route("/")
-def index():
+def serve_index():
     return send_from_directory("static", "index.html")
 
 @app.route("/history")
