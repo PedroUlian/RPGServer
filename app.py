@@ -2,6 +2,7 @@ import os
 import sqlite3
 from flask import Flask, jsonify, request
 from flask_socketio import SocketIO, send
+from flask import send_from_directory
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "segredo_rpg"
@@ -44,6 +45,10 @@ def get_messages(limit=50):
 @app.route("/")
 def index():
     return "Servidor RPG Chat rodando!"
+
+@app.route("/")
+def index():
+    return send_from_directory("static", "index.html")
 
 @app.route("/history")
 def history():
