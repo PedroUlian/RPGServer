@@ -44,10 +44,6 @@ def get_messages(limit=50):
 
 @app.route("/")
 def index():
-    return "Servidor RPG Chat rodando!"
-
-@app.route("/")
-def serve_index():
     return send_from_directory("static", "index.html")
 
 @app.route("/history")
