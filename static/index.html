@@ -1,30 +1,36 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>RPG Chat</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="/socket.io/socket.io.js"></script>
-  <script defer src="client.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RPG Chat</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 </head>
 <body>
-  <div class="login-container">
-    <h2>Bem-vindo ao RPG Chat</h2>
-    <input id="username" placeholder="Nome de usuário" />
-    <input id="password" type="password" placeholder="Senha" />
+
+<div class="app-container">
+
+  <!-- Login -->
+  <div class="login-container" id="login-screen">
+    <h2>RPG Chat</h2>
+    <input type="text" id="username" placeholder="Digite seu nome">
     <div class="buttons">
-      <button id="loginBtn">Login</button>
-      <button id="registerBtn">Registrar</button>
+      <button id="login-btn">Entrar</button>
     </div>
   </div>
 
-  <div class="chat-container" style="display:none">
-    <div id="chat" class="chat-box"></div>
+  <!-- Chat -->
+  <div class="chat-container" id="chat-screen" style="display:none;">
+    <div class="chat-box" id="chat-box"></div>
     <div class="input-container">
-      <input id="msg" placeholder="Digite sua mensagem..." />
-      <button id="send">Enviar</button>
-      <button id="clear">Limpar histórico</button>
+      <input type="text" id="message-input" placeholder="Digite sua mensagem">
+      <button id="send-btn">Enviar</button>
     </div>
   </div>
+
+</div>
+
+<script src="app.js"></script>
 </body>
 </html>
