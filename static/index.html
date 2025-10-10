@@ -9,17 +9,22 @@
 </head>
 <body>
   <div class="login-container">
+    <h2>Bem-vindo ao RPG Chat</h2>
     <input id="username" placeholder="Nome de usuário" />
     <input id="password" type="password" placeholder="Senha" />
-    <button id="loginBtn">Login</button>
-    <button id="registerBtn">Registrar</button>
+    <div class="buttons">
+      <button id="loginBtn">Login</button>
+      <button id="registerBtn">Registrar</button>
+    </div>
   </div>
 
   <div class="chat-container" style="display:none">
-    <div id="chat"></div>
-    <input id="msg" placeholder="Digite sua mensagem..." />
-    <button id="send">Enviar</button>
-    <button id="clear">Limpar histórico</button>
+    <div id="chat" class="chat-box"></div>
+    <div class="input-container">
+      <input id="msg" placeholder="Digite sua mensagem..." />
+      <button id="send">Enviar</button>
+      <button id="clear">Limpar histórico</button>
+    </div>
   </div>
 </body>
 </html>
