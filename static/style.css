@@ -11,125 +11,93 @@ html, body {
   font-family: 'Arial', sans-serif;
   background-color: #121212;
   color: #f0f0f0;
-}
-
-/* Centralização vertical e horizontal */
-body {
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 10px;
 }
 
-/* Containers de login e chat */
+/* Containers centralizados, escala proporcional */
 .login-container, .chat-container {
-  width: 100%;
-  max-width: 450px;
+  width: 90vw;          /* 90% da largura da tela */
+  max-width: 600px;     /* não exagerar no desktop */
+  height: 80vh;         /* 80% da altura da tela */
+  max-height: 800px;
+  min-height: 400px;    /* manter proporção mínima */
   background-color: #1e1e1e;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 15px rgba(0,0,0,0.5);
+  padding: 2vh 2vw;     /* proporcional à tela */
+  border-radius: 1vw;
+  box-shadow: 0 0 2vw rgba(0,0,0,0.5);
   display: flex;
   flex-direction: column;
-  align-items: center;
+  justify-content: space-between;
 }
 
-/* Login */
+/* Títulos */
 .login-container h2 {
-  margin-bottom: 15px;
+  margin-bottom: 2vh;
   color: #6b5dd8;
-  font-size: 24px;
+  font-size: 2.5vh;     /* escala com altura da tela */
   text-align: center;
 }
 
+/* Inputs */
 input {
   width: 100%;
-  padding: 10px;
-  margin: 6px 0;
-  border-radius: 6px;
+  padding: 1vh 1vw;
+  margin: 0.5vh 0;
+  border-radius: 0.5vw;
   border: 1px solid #333;
   background-color: #2a2a2a;
   color: #fff;
-  font-size: 16px;
+  font-size: 2vh;
 }
 
-.buttons {
+/* Botões */
+.buttons, .input-container {
   width: 100%;
   display: flex;
-  justify-content: space-between;
-  margin-top: 10px;
+  gap: 1vw;
 }
 
-.buttons button {
+.buttons button, .input-container button {
   flex: 1;
-  margin: 0 5px;
-  padding: 10px;
+  padding: 1vh 1vw;
   border: none;
-  border-radius: 6px;
+  border-radius: 0.5vw;
   background-color: #6b5dd8;
   color: #fff;
+  font-size: 2vh;
   cursor: pointer;
-  font-size: 16px;
   transition: 0.2s;
 }
 
-.buttons button:hover {
+.buttons button:hover, .input-container button:hover {
   background-color: #5846b8;
 }
 
-/* Chat */
+/* Chat Box */
 .chat-box {
-  width: 100%;
   flex: 1;
-  min-height: 300px;
-  max-height: 400px;
-  overflow-y: auto;
-  padding: 10px;
-  margin-bottom: 10px;
+  width: 100%;
   background-color: #101010;
-  border-radius: 10px;
+  border-radius: 1vw;
+  padding: 1vh 1vw;
+  margin-bottom: 1vh;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 0.5vh;
+  overflow-y: auto;
   scroll-behavior: smooth;
-}
-
-.input-container {
-  width: 100%;
-  display: flex;
-  gap: 10px;
-}
-
-.input-container input {
-  flex: 1;
-  padding: 10px;
-  border-radius: 6px;
-  border: 1px solid #333;
-  background-color: #2a2a2a;
-  color: #fff;
-}
-
-.input-container button {
-  padding: 10px;
-  border: none;
-  border-radius: 6px;
-  background-color: #6b5dd8;
-  color: #fff;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.input-container button:hover {
-  background-color: #5846b8;
 }
 
 /* Mensagens */
 .message {
   max-width: 70%;
-  padding: 10px 14px;
-  border-radius: 20px;
+  padding: 1vh 1vw;
+  border-radius: 2vw;
   word-wrap: break-word;
-  font-size: 15px;
+  font-size: 2vh;
   line-height: 1.4;
 }
 
@@ -147,31 +115,36 @@ input {
 
 /* Scrollbar */
 .chat-box::-webkit-scrollbar {
-  width: 6px;
+  width: 0.8vw;
 }
 
 .chat-box::-webkit-scrollbar-thumb {
   background-color: #6b5dd8;
-  border-radius: 3px;
+  border-radius: 0.4vw;
 }
 
 .chat-box::-webkit-scrollbar-track {
   background: #1e1e1e;
 }
 
-/* Responsivo para telas pequenas */
+/* Responsivo para telas muito pequenas */
 @media (max-width: 500px) {
-  .chat-box {
-    min-height: 250px;
-    max-height: 350px;
+  .login-container, .chat-container {
+    width: 95vw;
+    height: 90vh;
+    padding: 2vh 3vw;
   }
 
-  .buttons button, .input-container button, input {
-    font-size: 14px;
-    padding: 8px;
+  input, .input-container button, .buttons button {
+    font-size: 2.2vh;
+    padding: 1.5vh 1vw;
+  }
+
+  .chat-box {
+    gap: 0.8vh;
   }
 
   .message {
-    font-size: 14px;
+    font-size: 2vh;
   }
 }
