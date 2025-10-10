@@ -13,6 +13,15 @@ const msgInput = document.getElementById("msg");
 const sendBtn = document.getElementById("send");
 const clearBtn = document.getElementById("clear");
 
+function addMessage(user, text) {
+  const p = document.createElement("p");
+  p.textContent = `${text}`;
+  p.classList.add("message");
+  p.classList.add(user === currentUser ? "user" : "other");
+  chatBox.appendChild(p);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}
+
 // Login
 loginBtn.addEventListener("click", async () => {
   const username = usernameInput.value;
@@ -54,6 +63,7 @@ registerBtn.addEventListener("click", async () => {
 sendBtn.addEventListener("click", () => {
   const text = msgInput.value;
   if (!text) return;
+  addMessage(currentUser, text);
   socket.emit("message", { user: currentUser, text });
   msgInput.value = "";
 });
@@ -66,10 +76,7 @@ clearBtn.addEventListener("click", async () => {
 
 // Receber mensagens
 socket.on("message", data => {
-  const p = document.createElement("p");
-  p.textContent = `${data.user}: ${data.text}`;
-  chatBox.appendChild(p);
-  chatBox.scrollTop = chatBox.scrollHeight;
+  if (data.user !== currentUser) addMessage(data.user, data.text);
 });
 
 // Histórico inicial
@@ -77,10 +84,5 @@ async function loadHistory() {
   const res = await fetch("/history");
   const msgs = await res.json();
   chatBox.innerHTML = "";
-  msgs.forEach(m => {
-    const p = document.createElement("p");
-    p.textContent = `${m.user}: ${m.text}`;
-    chatBox.appendChild(p);
-  });
-  chatBox.scrollTop = chatBox.scrollHeight;
+  msgs.forEach(m => addMessage(m.user, m.text));
 }
