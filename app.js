@@ -16,17 +16,15 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 app.use(express.json());
+app.use(express.static(path.join(__dirname, "static"))); // pasta static igual testMain
 
-// 🔹 Servir arquivos front-end da pasta 'static' (igual ao original)
-app.use(express.static(path.join(__dirname, "static")));
-
-// 🔹 Conexão PostgreSQL com SSL (Render exige)
+// PostgreSQL com SSL
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
-// 🔹 Inicializar banco de dados (igual ao Python)
+// Inicializar DB
 async function initDB() {
   const client = await pool.connect();
   await client.query(`
@@ -46,12 +44,12 @@ async function initDB() {
 }
 initDB().catch(console.error);
 
-// 🔹 Página inicial
+// Página inicial
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "static", "index.html"));
 });
 
-// 🔹 Histórico de mensagens
+// Histórico de mensagens
 app.get("/history", async (req, res) => {
   try {
     const result = await pool.query(`
@@ -69,7 +67,7 @@ app.get("/history", async (req, res) => {
   }
 });
 
-// 🔹 Limpar histórico
+// Limpar histórico
 app.post("/clear_history", async (req, res) => {
   try {
     await pool.query("DELETE FROM messages");
@@ -81,7 +79,7 @@ app.post("/clear_history", async (req, res) => {
   }
 });
 
-// 🔹 Registro de usuário
+// Registro de usuário
 app.post("/register", async (req, res) => {
   const { username, password } = req.body;
   try {
@@ -91,12 +89,11 @@ app.post("/register", async (req, res) => {
     );
     res.json({ status: "ok", user_id: result.rows[0].id });
   } catch (err) {
-    console.error("Erro ao registrar usuário:", err.message);
     res.status(400).json({ error: err.message });
   }
 });
 
-// 🔹 Login de usuário
+// Login de usuário
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
   try {
@@ -107,12 +104,11 @@ app.post("/login", async (req, res) => {
     if (result.rows.length === 0) return res.status(401).json({ error: "Usuário ou senha inválidos" });
     res.json({ status: "ok", user_id: result.rows[0].id });
   } catch (err) {
-    console.error("Erro no login:", err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-// 🔹 SocketIO para mensagens em tempo real
+// SocketIO
 io.on("connection", (socket) => {
   console.log("Cliente conectado");
 
@@ -134,7 +130,7 @@ io.on("connection", (socket) => {
         [user_id, text]
       );
 
-      io.emit("message", data); // broadcast
+      io.emit("message", data);
     } catch (err) {
       console.error("Erro ao salvar mensagem:", err.message);
     }
@@ -145,7 +141,7 @@ io.on("connection", (socket) => {
   });
 });
 
-// 🔹 Rodar servidor
+// Rodar servidor
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
