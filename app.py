@@ -1,80 +1,76 @@
-import express from "express";
-import http from "http";
-import { Server } from "socket.io";
-import cors from "cors";
-import pkg from "pg";
+from flask import Flask, jsonify, request
+from flask_socketio import SocketIO, send
+from flask_cors import CORS
+import psycopg2
+import os
 
-const { Pool } = pkg;
+app = Flask(__name__)
+CORS(app)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
-//Conexão com PostgreSQL
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || "postgresql://usuario:senha@dpg-d3kk083uibrs73fcdm70-a.oregon-postgres.render.com:5432/nomedobanco",
-  ssl: { rejectUnauthorized: false },
-});
+#Conexão com PostgreSQL
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://usuario:senha@dpg-d3kk083uibrs73fcdm70-a.oregon-postgres.render.com:5432/nomedobanco")
 
-//Teste de conexão
-pool.connect()
-  .then(() => console.log("✅ Conectado ao PostgreSQL!"))
-  .catch(err => console.error("❌ Erro ao conectar ao PostgreSQL:", err));
+def get_conn():
+    return psycopg2.connect(DATABASE_URL, sslmode="require")
 
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: { origin: "*" }
-});
+#Rota de teste
+@app.route("/")
+def home():
+    return "Servidor do RPG Chat ativo 🚀"
 
-app.use(cors());
-app.use(express.json());
+# Buscar histórico
+@app.route("/history")
+def history():
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("SELECT username, text FROM messages ORDER BY id ASC LIMIT 100;")
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        msgs = [{"user": r[0], "text": r[1]} for r in rows]
+        return jsonify(msgs)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-//Buscar histórico
-app.get("/history", async (req, res) => {
-  try {
-    const result = await pool.query("SELECT username AS user, text FROM messages ORDER BY id ASC LIMIT 100");
-    res.json(result.rows);
-  } catch (err) {
-    console.error("Erro ao buscar histórico:", err);
-    res.status(500).json({ error: "Erro ao buscar histórico" });
-  }
-});
+#Limpar histórico
+@app.route("/clear_history", methods=["POST"])
+def clear_history():
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM messages;")
+        conn.commit()
+        cur.close()
+        conn.close()
+        socketio.emit("history_cleared")
+        return jsonify({"status": "ok"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-//Limpar histórico
-app.post("/clear_history", async (req, res) => {
-  try {
-    await pool.query("DELETE FROM messages");
-    io.emit("history_cleared");
-    res.json({ status: "ok" });
-  } catch (err) {
-    console.error("Erro ao limpar histórico:", err);
-    res.status(500).json({ error: "Erro ao limpar histórico" });
-  }
-});
+#Mensagens Socket.IO
+@socketio.on("message")
+def handle_message(data):
+    if not data or "text" not in data or "user" not in data:
+        return
 
-//Conexão Socket.IO
-io.on("connection", (socket) => {
-  console.log("🟢 Novo usuário conectado:", socket.id);
+    user = data["user"]
+    text = data["text"]
 
-  socket.on("message", async (data) => {
-    if (!data.text || !data.user) return;
+    # Salvar no banco
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("INSERT INTO messages (username, text) VALUES (%s, %s);", (user, text))
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        print("Erro ao salvar mensagem:", e)
 
-    // Salvar no banco
-    try {
-      await pool.query("INSERT INTO messages (username, text) VALUES ($1, $2)", [data.user, data.text]);
-      io.emit("message", data);
-    } catch (err) {
-      console.error("Erro ao salvar mensagem:", err);
-    }
-  });
+    send(data, broadcast=True)
 
-  socket.on("disconnect", () => {
-    console.log("🔴 Usuário desconectado:", socket.id);
-  });
-});
-
-//Rota padrão
-app.get("/", (req, res) => {
-  res.send("Servidor do RPG Chat ativo 🚀");
-});
-
-//Porta(Render usa variável PORT)
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    socketio.run(app, host="0.0.0.0", port=port)
