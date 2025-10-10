@@ -1,81 +1,80 @@
-import os
-import sqlite3
-from flask import Flask, jsonify, request
-from flask_socketio import SocketIO, send
-from flask import send_from_directory
+import express from "express";
+import http from "http";
+import { Server } from "socket.io";
+import cors from "cors";
+import pkg from "pg";
 
-app = Flask(__name__)
-app.config["SECRET_KEY"] = "segredo_rpg"
+const { Pool } = pkg;
 
-socketio = SocketIO(app, cors_allowed_origins="*")
+// 🔹 Conexão com PostgreSQL
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || "postgresql://usuario:senha@dpg-d3kk083uibrs73fcdm70-a.oregon-postgres.render.com:5432/nomedobanco",
+  ssl: { rejectUnauthorized: false },
+});
 
-# ====== BANCO DE DADOS ======
-DB_FILE = "chat.db"
+// Teste de conexão
+pool.connect()
+  .then(() => console.log("✅ Conectado ao PostgreSQL!"))
+  .catch(err => console.error("❌ Erro ao conectar ao PostgreSQL:", err));
 
-def init_db():
-    with sqlite3.connect(DB_FILE) as conn:
-        c = conn.cursor()
-        c.execute("""
-        CREATE TABLE IF NOT EXISTS messages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user TEXT,
-            text TEXT,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-        """)
-        conn.commit()
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: { origin: "*" }
+});
 
-init_db()
+app.use(cors());
+app.use(express.json());
 
-def save_message(user, text):
-    with sqlite3.connect(DB_FILE) as conn:
-        c = conn.cursor()
-        c.execute("INSERT INTO messages (user, text) VALUES (?, ?)", (user, text))
-        conn.commit()
+// 🔹 Buscar histórico
+app.get("/history", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT username AS user, text FROM messages ORDER BY id ASC LIMIT 100");
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Erro ao buscar histórico:", err);
+    res.status(500).json({ error: "Erro ao buscar histórico" });
+  }
+});
 
-def get_messages(limit=50):
-    with sqlite3.connect(DB_FILE) as conn:
-        c = conn.cursor()
-        c.execute("SELECT user, text, timestamp FROM messages ORDER BY id DESC LIMIT ?", (limit,))
-        rows = c.fetchall()
-        return [{"user": r[0], "text": r[1], "timestamp": r[2]} for r in rows][::-1]
+// 🔹 Limpar histórico
+app.post("/clear_history", async (req, res) => {
+  try {
+    await pool.query("DELETE FROM messages");
+    io.emit("history_cleared");
+    res.json({ status: "ok" });
+  } catch (err) {
+    console.error("Erro ao limpar histórico:", err);
+    res.status(500).json({ error: "Erro ao limpar histórico" });
+  }
+});
 
-# ============================
+// 🔹 Conexão Socket.IO
+io.on("connection", (socket) => {
+  console.log("🟢 Novo usuário conectado:", socket.id);
 
-@app.route("/")
-def index():
-    return send_from_directory("static", "index.html")
+  socket.on("message", async (data) => {
+    if (!data.text || !data.user) return;
 
-@app.route("/history")
-def history():
-    return jsonify(get_messages(50))
+    // Salvar no banco
+    try {
+      await pool.query("INSERT INTO messages (username, text) VALUES ($1, $2)", [data.user, data.text]);
+      io.emit("message", data);
+    } catch (err) {
+      console.error("Erro ao salvar mensagem:", err);
+    }
+  });
 
-@app.route("/clear_history", methods=["POST"])
-def clear_history():
-    with sqlite3.connect(DB_FILE) as conn:
-        c = conn.cursor()
-        c.execute("DELETE FROM messages")
-        conn.commit()
-    socketio.emit("history_cleared")
-    return jsonify({"status": "ok"})
+  socket.on("disconnect", () => {
+    console.log("🔴 Usuário desconectado:", socket.id);
+  });
+});
 
-# SocketIO recebe mensagem
-@socketio.on("message")
-def handle_message(data):
-    user = data.get("user", "Anon")
-    text = data.get("text", "")
-    if text.strip():
-        save_message(user, text)
-        print(f"Mensagem de {user}: {text}")
-        send({"user": user, "text": text}, broadcast=True)
+// 🔹 Rota padrão
+app.get("/", (req, res) => {
+  res.send("Servidor do RPG Chat ativo 🚀");
+});
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    socketio.run(
-        app,
-        host="0.0.0.0",
-        port=port,
-        use_reloader=True,
-        log_output=True,
-        allow_unsafe_werkzeug=True
-    )
+// 🔹 Porta (Render usa variável PORT)
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => console.log(`🌍 Servidor rodando na porta ${PORT}`));
