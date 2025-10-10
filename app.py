@@ -70,7 +70,7 @@ io.on("connection", (socket) => {
   });
 });
 
-// 🔹 Rota padrão
+//Rota padrão
 app.get("/", (req, res) => {
   res.send("Servidor do RPG Chat ativo 🚀");
 });
