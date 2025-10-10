@@ -41,18 +41,11 @@ body {
   padding:10px 14px; 
   word-wrap:break-word; 
 }
-
 #input-area { display:flex; padding:10px; border-top:1px solid #334155; background:#0f172a; }
 #msg { flex:1; padding:12px 15px; border:none; border-radius:25px; font-size:15px; outline:none; background:#1e293b; color:#fff; }
 #send, #clear { padding:12px 18px; margin-left:8px; border:none; border-radius:25px; background:#16a34a; color:white; font-weight:bold; cursor:pointer; transition:0.2s; }
 #send:hover, #clear:hover { background:#15803d; }
-
 @keyframes fadeIn { from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
-@media(max-width:768px){
-  #chat{height:100vh;border-radius:0;max-width:100%;}
-  #messages{font-size:14px;}
-  #send, #clear{font-size:14px;}
-}
 </style>
 </head>
 <body>
@@ -67,17 +60,21 @@ body {
 </div>
 
 <script>
-let username = "";
-while (!username) username = prompt("Digite seu nome de usuário:");
+let username = localStorage.getItem("username");
+if (!username) {
+  username = prompt("Digite seu nome de usuário:");
+  localStorage.setItem("username", username);
+}
 
-const socket = io(window.location.origin, { transports: ["websocket"] });
+// 🔹 Endereço do backend no Render
+const backend = "https://rpgserver.onrender.com"; // troque se estiver em outro domínio
+const socket = io(backend, { transports: ["websocket"] });
 
 const messages = document.getElementById("messages");
 const input = document.getElementById("msg");
 const button = document.getElementById("send");
 const clearBtn = document.getElementById("clear");
 
-// Adicionar mensagem
 function addMessage(text, type="server") {
   const container = document.createElement("div");
   container.className = `message ${type}`;
@@ -88,12 +85,9 @@ function addMessage(text, type="server") {
   messages.scrollTop = messages.scrollHeight;
 }
 
-// Conexão SocketIO
 socket.on("connect", () => {
   addMessage("✅ Conectado ao servidor!", "server");
-
-  // Buscar histórico
-  fetch("/history")
+  fetch(`${backend}/history`)
     .then(res => res.json())
     .then(msgs => {
       msgs.forEach(m => {
@@ -103,20 +97,17 @@ socket.on("connect", () => {
     });
 });
 
-// Recebe mensagens
 socket.on("message", (data) => {
   if (!data.user || !data.text) return;
   if (data.user === username) return;
   addMessage(`${data.user}: ${data.text}`, "server");
 });
 
-// Recebe evento de limpeza
 socket.on("history_cleared", () => {
   messages.innerHTML = "";
-  addMessage("🗑 Histórico limpo por outro usuário!", "server");
+  addMessage("🗑 Histórico limpo!", "server");
 });
 
-// Enviar mensagem
 function sendMessage() {
   const msg = input.value.trim();
   if (!msg) return;
@@ -128,10 +119,9 @@ function sendMessage() {
 button.addEventListener("click", sendMessage);
 input.addEventListener("keypress", e => { if(e.key==="Enter") sendMessage(); });
 
-// Limpar histórico
 clearBtn.addEventListener("click", () => {
   if (!confirm("Tem certeza que quer apagar todas as mensagens?")) return;
-  fetch("/clear_history", { method: "POST" })
+  fetch(`${backend}/clear_history`, { method: "POST" })
     .then(res => res.json())
     .then(data => {
       if (data.status === "ok") {
