@@ -1,25 +1,23 @@
 from flask import Flask, jsonify, request
 from flask_socketio import SocketIO, send
-from flask_cors import CORS
 import psycopg2
 import os
 
 app = Flask(__name__)
-CORS(app)
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins="*")  # O Socket.IO já cuida do CORS interno
 
-#Conexão com PostgreSQL
+# Conexão com PostgreSQL
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://usuario:senha@dpg-d3kk083uibrs73fcdm70-a.oregon-postgres.render.com:5432/nomedobanco")
 
 def get_conn():
     return psycopg2.connect(DATABASE_URL, sslmode="require")
 
-#Rota de teste
+#  Página inicial
 @app.route("/")
 def home():
     return "Servidor do RPG Chat ativo 🚀"
 
-# Buscar histórico
+#  Histórico de mensagens
 @app.route("/history")
 def history():
     try:
@@ -32,9 +30,10 @@ def history():
         msgs = [{"user": r[0], "text": r[1]} for r in rows]
         return jsonify(msgs)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print("Erro ao buscar histórico:", e)
+        return jsonify({"error": "Erro ao buscar histórico"}), 500
 
-#Limpar histórico
+#  Limpar histórico
 @app.route("/clear_history", methods=["POST"])
 def clear_history():
     try:
@@ -47,9 +46,10 @@ def clear_history():
         socketio.emit("history_cleared")
         return jsonify({"status": "ok"})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print("Erro ao limpar histórico:", e)
+        return jsonify({"error": "Erro ao limpar histórico"}), 500
 
-#Mensagens Socket.IO
+#  Receber e enviar mensagens em tempo real
 @socketio.on("message")
 def handle_message(data):
     if not data or "text" not in data or "user" not in data:
@@ -58,7 +58,7 @@ def handle_message(data):
     user = data["user"]
     text = data["text"]
 
-    # Salvar no banco
+    # Salva a mensagem no banco
     try:
         conn = get_conn()
         cur = conn.cursor()
