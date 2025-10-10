@@ -1,5 +1,4 @@
 const socket = io();
-
 let currentUser = null;
 
 const loginBtn = document.getElementById("loginBtn");
