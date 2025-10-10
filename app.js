@@ -1,4 +1,4 @@
-// server.js (versão JS equivalente ao testMain)
+// server.js
 import express from "express";
 import { Server } from "socket.io";
 import http from "http";
@@ -16,15 +16,17 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public"))); // para servir index.html e front
 
-// 🔹 Conexão PostgreSQL com SSL
+// 🔹 Servir arquivos front-end da pasta 'static' (igual ao original)
+app.use(express.static(path.join(__dirname, "static")));
+
+// 🔹 Conexão PostgreSQL com SSL (Render exige)
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
-// 🔹 Inicializar DB (igualzinho ao que tava antes)
+// 🔹 Inicializar banco de dados (igual ao Python)
 async function initDB() {
   const client = await pool.connect();
   await client.query(`
@@ -44,16 +46,16 @@ async function initDB() {
 }
 initDB().catch(console.error);
 
-// 🔹 Página inicial serve o HTML
+// 🔹 Página inicial
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  res.sendFile(path.join(__dirname, "static", "index.html"));
 });
 
-// 🔹 Histórico de mensagens (igual ao Python)
+// 🔹 Histórico de mensagens
 app.get("/history", async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT m.id, u.username, m.text, m.timestamp
+      SELECT m.id, u.username, m.text
       FROM messages m
       JOIN users u ON m.user_id = u.id
       ORDER BY m.id ASC
@@ -79,13 +81,13 @@ app.post("/clear_history", async (req, res) => {
   }
 });
 
-// 🔹 Registro de usuário (igual ao Python)
+// 🔹 Registro de usuário
 app.post("/register", async (req, res) => {
   const { username, password } = req.body;
   try {
     const result = await pool.query(
       "INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id",
-      [username, password] // ⚠️ Em produção use hash!
+      [username, password]
     );
     res.json({ status: "ok", user_id: result.rows[0].id });
   } catch (err) {
@@ -110,7 +112,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
-// 🔹 SocketIO para mensagens em tempo real (igual ao Python)
+// 🔹 SocketIO para mensagens em tempo real
 io.on("connection", (socket) => {
   console.log("Cliente conectado");
 
@@ -119,7 +121,6 @@ io.on("connection", (socket) => {
     if (!user || !text) return;
 
     try {
-      // Buscar user_id pelo username
       const userResult = await pool.query(
         "SELECT id FROM users WHERE username=$1",
         [user]
@@ -132,7 +133,8 @@ io.on("connection", (socket) => {
         "INSERT INTO messages (user_id, text) VALUES ($1, $2)",
         [user_id, text]
       );
-      io.emit("message", data); // broadcast igual SocketIO do Python
+
+      io.emit("message", data); // broadcast
     } catch (err) {
       console.error("Erro ao salvar mensagem:", err.message);
     }
