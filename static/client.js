@@ -5,15 +5,28 @@ const loginScreen = document.getElementById('login-screen');
 const chatScreen = document.getElementById('chat-screen');
 const loginBtn = document.getElementById('login-btn');
 const usernameInput = document.getElementById('username');
+const passwordInput = document.getElementById('password');
+const loginError = document.getElementById('login-error');
 
 let username = '';
 
+// Função de login (simulação, backend real necessário para validar)
 loginBtn.addEventListener('click', () => {
-  const val = usernameInput.value.trim();
-  if (!val) return;
-  username = val;
+  const user = usernameInput.value.trim();
+  const pass = passwordInput.value.trim();
+
+  if (!user || !pass) {
+    loginError.style.display = 'block';
+    loginError.textContent = 'Preencha usuário e senha!';
+    return;
+  }
+
+  // Aqui você pode validar com backend (POST /login)
+  // Para teste, aceitamos qualquer combinação
+  username = user;
   loginScreen.style.display = 'none';
   chatScreen.style.display = 'flex';
+  loginError.style.display = 'none';
 });
 
 // Chat
