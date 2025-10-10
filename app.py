@@ -7,7 +7,7 @@ app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*")  # O Socket.IO já cuida do CORS interno
 
 # 🔹 Conexão com PostgreSQL
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://usuario:senha@dpg-d3kk083uibrs73fcdm70-a.oregon-postgres.render.com:5432/nomedobanco")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://pedroulian_postgres_chat_user:g9wUtJlIninJk8dTAvmZGNhNqDAsgDjL@dpg-d3kk083uibrs73fcdm70-a.oregon-postgres.render.com/pedroulian_postgres_chat")
 
 def get_conn():
     return psycopg2.connect(DATABASE_URL, sslmode="require")
