@@ -1,16 +1,16 @@
 body {
   font-family: 'Arial', sans-serif;
-  background-color: #1c1c1c;
+  background-color: #121212;
   color: #f0f0f0;
   margin: 0;
   padding: 0;
 }
 
 .login-container, .chat-container {
-  width: 450px;
+  width: 400px;
   margin: 50px auto;
   text-align: center;
-  background-color: #2a2a2a;
+  background-color: #1e1e1e;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 0 10px #000;
@@ -18,6 +18,7 @@ body {
 
 .login-container h2 {
   margin-bottom: 15px;
+  color: #6b5dd8;
 }
 
 input {
@@ -25,9 +26,9 @@ input {
   padding: 10px;
   margin: 8px 0;
   border-radius: 4px;
-  border: 1px solid #555;
-  background-color: #333;
-  color: #f0f0f0;
+  border: 1px solid #333;
+  background-color: #2a2a2a;
+  color: #fff;
 }
 
 .buttons button {
@@ -45,13 +46,16 @@ input {
 }
 
 .chat-box {
-  border: 1px solid #555;
+  border: 1px solid #333;
   height: 350px;
   overflow-y: auto;
   padding: 10px;
   margin-bottom: 10px;
-  background-color: #111;
+  background-color: #101010;
   border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 
 .input-container {
@@ -61,14 +65,19 @@ input {
 
 .input-container input {
   flex: 1;
+  border-radius: 5px;
+  border: 1px solid #333;
+  padding: 8px;
+  background-color: #2a2a2a;
+  color: #fff;
 }
 
 .input-container button {
-  padding: 10px 12px;
+  padding: 8px 12px;
   background-color: #6b5dd8;
-  color: #fff;
-  border-radius: 5px;
   border: none;
+  border-radius: 5px;
+  color: #fff;
   cursor: pointer;
 }
 
@@ -76,6 +85,21 @@ input {
   background-color: #5846b8;
 }
 
-.chat-box p {
-  margin: 3px 0;
+.message {
+  max-width: 70%;
+  padding: 8px 12px;
+  border-radius: 20px;
+  word-wrap: break-word;
+}
+
+.message.user {
+  align-self: flex-end;
+  background-color: #6b5dd8;
+  color: #fff;
+}
+
+.message.other {
+  align-self: flex-start;
+  background-color: #2a2a2a;
+  color: #fff;
 }
