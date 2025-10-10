@@ -1,0 +1,7 @@
+body { font-family: sans-serif; background:#1e1e1e; color:#fff; }
+.login-container, .chat-container { margin: 50px auto; width: 400px; text-align:center; }
+#chat { border:1px solid #555; height:300px; overflow-y:auto; padding:10px; margin-bottom:10px; background:#111; }
+input { width: calc(100% - 20px); padding:8px; margin:5px 0; }
+button { padding:8px 12px; margin:5px; background:#6b5dd8; color:#fff; border:none; cursor:pointer; }
+button:hover { background:#5846b8; }
+p { margin:3px 0; }
