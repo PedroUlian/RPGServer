@@ -1,3 +1,6 @@
+/* Reset básico */
+* { box-sizing: border-box; margin:0; padding:0; }
+
 html, body {
   height: 100%;
   width: 100%;
@@ -6,21 +9,18 @@ html, body {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 0;
 }
 
-/* Container principal ocupa 100% da tela */
 .app-container {
   width: 90vw;
   max-width: 600px;
-  height: 95vh;     /* altura quase total da tela */
-  min-height: 500px;
+  height: 95vh;
   display: flex;
   flex-direction: column;
   gap: 2vh;
 }
 
-/* Login Container */
+/* Login */
 .login-container {
   width: 100%;
   background-color: #1e1e1e;
@@ -33,10 +33,37 @@ html, body {
   gap: 2vh;
 }
 
-/* Chat Container */
+.login-container h2 { font-size: 2.5vh; color: #6b5dd8; }
+
+input {
+  width: 100%;
+  padding: 1.5vh 1vw;
+  font-size: 2vh;
+  border-radius: 6px;
+  border: 1px solid #333;
+  background-color: #2a2a2a;
+  color: #fff;
+}
+
+.buttons { width: 100%; display: flex; gap: 1vw; }
+
+.buttons button {
+  flex: 1;
+  padding: 1.5vh 1vw;
+  font-size: 2vh;
+  border-radius: 6px;
+  border: none;
+  background-color: #6b5dd8;
+  color: #fff;
+  cursor: pointer;
+}
+
+.buttons button:hover { background-color: #5846b8; }
+
+/* Chat */
 .chat-container {
   width: 100%;
-  flex: 1;                   /* ocupa o máximo vertical possível */
+  flex: 1;
   display: flex;
   flex-direction: column;
   background-color: #1e1e1e;
@@ -45,9 +72,9 @@ html, body {
   gap: 1vh;
 }
 
-/* Chat Box */
 .chat-box {
-  flex: 1;                   /* ocupa todo espaço vertical do chat-container */
+  height: 70%;  /* cobre boa parte da tela */
+  min-height: 200px;
   width: 100%;
   background-color: #101010;
   border-radius: 10px;
@@ -58,40 +85,6 @@ html, body {
   overflow-y: auto;
 }
 
-/* Input Container fixo embaixo */
-.input-container {
-  width: 100%;
-  display: flex;
-  gap: 1vw;
-  margin-top: 1vh;
-}
-
-/* Inputs e Botões */
-input {
-  flex: 1;
-  padding: 1.5vh 1vw;
-  font-size: 2vh;
-  border-radius: 6px;
-  border: 1px solid #333;
-  background-color: #2a2a2a;
-  color: #fff;
-}
-
-.input-container button, .buttons button {
-  padding: 1.5vh 1vw;
-  font-size: 2vh;
-  border-radius: 6px;
-  border: none;
-  background-color: #6b5dd8;
-  color: #fff;
-  cursor: pointer;
-}
-
-.input-container button:hover, .buttons button:hover {
-  background-color: #5846b8;
-}
-
-/* Mensagens */
 .message {
   max-width: 70%;
   padding: 1vh 1vw;
@@ -101,45 +94,29 @@ input {
   word-wrap: break-word;
 }
 
-.message.user {
-  align-self: flex-end;
-  background-color: #6b5dd8;
-  color: #fff;
+.message.user { align-self: flex-end; background-color: #6b5dd8; color: #fff; }
+.message.other { align-self: flex-start; background-color: #2a2a2a; color: #fff; }
+
+.input-container {
+  width: 100%;
+  display: flex;
+  gap: 1vw;
+  margin-top: 1vh;
 }
 
-.message.other {
-  align-self: flex-start;
-  background-color: #2a2a2a;
-  color: #fff;
-}
+.input-container input { flex: 1; padding: 1.5vh 1vw; font-size: 2vh; border-radius: 6px; border: 1px solid #333; background-color: #2a2a2a; color: #fff; }
 
-/* Scrollbar */
-.chat-box::-webkit-scrollbar {
-  width: 6px;
-}
+.input-container button { padding: 1.5vh 1vw; font-size: 2vh; border-radius: 6px; border: none; background-color: #6b5dd8; color: #fff; cursor: pointer; }
 
-.chat-box::-webkit-scrollbar-thumb {
-  background-color: #6b5dd8;
-  border-radius: 3px;
-}
+.input-container button:hover { background-color: #5846b8; }
 
-.chat-box::-webkit-scrollbar-track {
-  background: #1e1e1e;
-}
+.chat-box::-webkit-scrollbar { width: 6px; }
+.chat-box::-webkit-scrollbar-thumb { background-color: #6b5dd8; border-radius: 3px; }
+.chat-box::-webkit-scrollbar-track { background: #1e1e1e; }
 
 /* Responsivo */
-@media (max-width: 500px) {
-  .app-container {
-    width: 95vw;
-    height: 95vh;
-  }
-
-  input, .input-container button, .buttons button {
-    font-size: 2.2vh;
-    padding: 1.5vh 1vw;
-  }
-
-  .message {
-    font-size: 1.8vh;
-  }
+@media (max-width:500px){
+  .app-container { width:95vw; height:95vh; }
+  input, .input-container button, .buttons button { font-size:2.2vh; padding:1.5vh 1vw; }
+  .message { font-size:1.8vh; }
 }
