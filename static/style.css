@@ -14,99 +14,108 @@ html, body {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0;
 }
 
-/* Container principal que cresce proporcionalmente */
+/* Container principal */
 .app-container {
-  width: 90vw;          /* ocupa 90% da largura da tela */
-  max-width: 600px;     /* não ficar gigante no PC */
-  height: 90vh;         /* ocupa 90% da altura da tela */
+  width: 90vw;
+  max-width: 600px;
+  min-width: 320px;
+  height: 90vh;
   max-height: 800px;
-  min-height: 400px;    /* mínimo para desktop pequeno */
+  min-height: 500px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center; /* centra conteúdo verticalmente */
+  align-items: center;
+  gap: 2vh; /* espaço entre login/chat proporcional à tela */
 }
 
-/* Login e chat containers */
-.login-container, .chat-container {
+/* Login Container */
+.login-container {
   width: 100%;
-  height: 100%;
-  background-color: #1e1e1e;
-  padding: 20px;
-  border-radius: 12px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   align-items: center;
-  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  justify-content: center;
+  background-color: #1e1e1e;
+  border-radius: 12px;
+  padding: 3vh 3vw;
+  gap: 2vh;
 }
 
 /* Título */
 .login-container h2 {
-  font-size: 2em;
+  font-size: 2.5vh;
   color: #6b5dd8;
-  margin-bottom: 15px;
   text-align: center;
 }
 
-/* Inputs */
+/* Inputs e botões */
 input {
   width: 100%;
-  padding: 10px;
-  margin: 5px 0;
+  padding: 1.5vh 1vw;
+  font-size: 2vh;
   border-radius: 6px;
   border: 1px solid #333;
   background-color: #2a2a2a;
   color: #fff;
-  font-size: 16px;
 }
 
-/* Botões */
-.buttons, .input-container {
+.buttons {
   width: 100%;
   display: flex;
-  gap: 10px;
+  gap: 1vw;
 }
 
-.buttons button, .input-container button {
+.buttons button {
   flex: 1;
-  padding: 10px;
-  border: none;
+  padding: 1.5vh 1vw;
+  font-size: 2vh;
   border-radius: 6px;
+  border: none;
   background-color: #6b5dd8;
   color: #fff;
-  font-size: 16px;
   cursor: pointer;
   transition: 0.2s;
 }
 
-.buttons button:hover, .input-container button:hover {
+.buttons button:hover {
   background-color: #5846b8;
+}
+
+/* Chat Container */
+.chat-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #1e1e1e;
+  border-radius: 12px;
+  padding: 2vh 2vw;
+  gap: 1vh;
 }
 
 /* Chat box */
 .chat-box {
-  width: 100%;
   flex: 1;
+  width: 100%;
   background-color: #101010;
   border-radius: 10px;
-  padding: 10px;
-  margin-bottom: 10px;
+  padding: 1vh 1vw;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 1vh;
   overflow-y: auto;
 }
 
 /* Mensagens */
 .message {
   max-width: 70%;
-  padding: 10px 14px;
+  padding: 1vh 1vw;
   border-radius: 20px;
   word-wrap: break-word;
-  font-size: 15px;
+  font-size: 2vh;
   line-height: 1.4;
 }
 
@@ -120,6 +129,33 @@ input {
   align-self: flex-start;
   background-color: #2a2a2a;
   color: #fff;
+}
+
+/* Input de envio */
+.input-container {
+  width: 100%;
+  display: flex;
+  gap: 1vw;
+}
+
+.input-container input {
+  flex: 1;
+  padding: 1.5vh 1vw;
+  font-size: 2vh;
+}
+
+.input-container button {
+  padding: 1.5vh 1vw;
+  font-size: 2vh;
+  border-radius: 6px;
+  border: none;
+  background-color: #6b5dd8;
+  color: #fff;
+  cursor: pointer;
+}
+
+.input-container button:hover {
+  background-color: #5846b8;
 }
 
 /* Scrollbar */
@@ -144,15 +180,15 @@ input {
   }
 
   input, .input-container button, .buttons button {
-    font-size: 14px;
-    padding: 8px;
+    font-size: 2.2vh;
+    padding: 1.5vh 1vw;
   }
 
   .chat-box {
-    gap: 4px;
+    gap: 0.8vh;
   }
 
   .message {
-    font-size: 14px;
+    font-size: 1.8vh;
   }
 }
