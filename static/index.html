@@ -1,70 +1,40 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RPG Chat</title>
-  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- TELA DE LOGIN -->
+  <!-- Tela de login -->
   <div id="login-screen" class="screen active">
     <div class="login-box">
-      <h1>RPG Chat</h1>
-      <input type="text" id="username" placeholder="Usuário" />
-      <input type="password" id="password" placeholder="Senha" />
+      <h2>Entrar</h2>
+      <input type="text" id="username" placeholder="Usuário">
+      <input type="password" id="password" placeholder="Senha">
       <button id="login-btn">Entrar</button>
     </div>
   </div>
 
-  <!-- TELA PRINCIPAL -->
+  <!-- Tela de chat -->
   <div id="chat-screen" class="screen">
     <div class="sidebar">
       <h2>Perfil</h2>
-      <h2 class="active">Mensagens</h2>
-      <h2>História</h2>
+      <p class="active">Mensagens</p>
+      <p>História</p>
     </div>
 
-    <div class="main">
-      <div id="chat-box" class="chat-box"></div>
-
-      <div class="input-box">
-        <input id="message-input" type="text" placeholder="Insira o texto aqui:" />
+    <div class="chat-container">
+      <div id="chat-box"></div>
+      <div class="input-area">
+        <input id="message-input" placeholder="Insira o texto aqui:">
         <button id="send-btn">➤</button>
       </div>
     </div>
   </div>
 
-  <script>
-    // Simulação de login local (ajuste para o back-end real)
-    const loginBtn = document.getElementById('login-btn');
-    loginBtn.addEventListener('click', () => {
-      const user = document.getElementById('username').value.trim();
-      const pass = document.getElementById('password').value.trim();
-      if (user && pass) {
-        document.getElementById('login-screen').classList.remove('active');
-        document.getElementById('chat-screen').classList.add('active');
-      } else {
-        alert("Preencha usuário e senha!");
-      }
-    });
-
-    // Scroll automático ao enviar msg
-    const chatBox = document.getElementById('chat-box');
-    const sendBtn = document.getElementById('send-btn');
-    const messageInput = document.getElementById('message-input');
-
-    sendBtn.addEventListener('click', () => {
-      const msg = messageInput.value.trim();
-      if (msg) {
-        const msgDiv = document.createElement('div');
-        msgDiv.className = 'message sent';
-        msgDiv.textContent = msg;
-        chatBox.appendChild(msgDiv);
-        messageInput.value = '';
-        chatBox.scrollTop = chatBox.scrollHeight;
-      }
-    });
-  </script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="client.js"></script>
 </body>
 </html>
