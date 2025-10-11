@@ -1,88 +1,48 @@
 const socket = io();
-let currentUser = null;
 
-const loginBtn = document.getElementById("loginBtn");
-const registerBtn = document.getElementById("registerBtn");
+const loginScreen = document.getElementById("login-screen");
+const chatScreen = document.getElementById("chat-screen");
+const loginBtn = document.getElementById("login-btn");
 const usernameInput = document.getElementById("username");
 const passwordInput = document.getElementById("password");
 
-const chatContainer = document.querySelector(".chat-container");
-const loginContainer = document.querySelector(".login-container");
-const chatBox = document.getElementById("chat");
-const msgInput = document.getElementById("msg");
-const sendBtn = document.getElementById("send");
-const clearBtn = document.getElementById("clear");
+const chatBox = document.getElementById("chat-box");
+const messageInput = document.getElementById("message-input");
+const sendBtn = document.getElementById("send-btn");
 
-function addMessage(user, text) {
-  const p = document.createElement("p");
-  p.textContent = `${text}`;
-  p.classList.add("message");
-  p.classList.add(user === currentUser ? "user" : "other");
-  chatBox.appendChild(p);
+let username = "";
+
+loginBtn.addEventListener("click", () => {
+  const name = usernameInput.value.trim();
+  const pass = passwordInput.value.trim();
+
+  if (name && pass) {
+    username = name;
+    localStorage.setItem("username", username);
+    loginScreen.classList.remove("active");
+    chatScreen.classList.add("active");
+  }
+});
+
+sendBtn.addEventListener("click", sendMessage);
+messageInput.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") sendMessage();
+});
+
+function sendMessage() {
+  const text = messageInput.value.trim();
+  if (!text || !username) return;
+
+  const data = { user: username, text };
+  socket.send(data);
+  messageInput.value = "";
+}
+
+socket.on("message", (data) => {
+  const msg = document.createElement("div");
+  msg.classList.add("message");
+  if (data.user === username) msg.classList.add("self");
+  msg.innerHTML = `<strong>${data.user}:</strong> ${data.text}`;
+  chatBox.appendChild(msg);
   chatBox.scrollTop = chatBox.scrollHeight;
-}
-
-// Login
-loginBtn.addEventListener("click", async () => {
-  const username = usernameInput.value;
-  const password = passwordInput.value;
-  const res = await fetch("/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password })
-  });
-  const data = await res.json();
-  if (data.status === "ok") {
-    currentUser = username;
-    loginContainer.style.display = "none";
-    chatContainer.style.display = "block";
-    loadHistory();
-  } else {
-    alert(data.error);
-  }
 });
-
-// Registro
-registerBtn.addEventListener("click", async () => {
-  const username = usernameInput.value;
-  const password = passwordInput.value;
-  const res = await fetch("/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password })
-  });
-  const data = await res.json();
-  if (data.status === "ok") {
-    alert("Registrado com sucesso!");
-  } else {
-    alert(data.error);
-  }
-});
-
-// Enviar mensagem
-sendBtn.addEventListener("click", () => {
-  const text = msgInput.value;
-  if (!text) return;
-  addMessage(currentUser, text);
-  socket.emit("message", { user: currentUser, text });
-  msgInput.value = "";
-});
-
-// Limpar histórico
-clearBtn.addEventListener("click", async () => {
-  await fetch("/clear_history", { method: "POST" });
-  chatBox.innerHTML = "";
-});
-
-// Receber mensagens
-socket.on("message", data => {
-  if (data.user !== currentUser) addMessage(data.user, data.text);
-});
-
-// Histórico inicial
-async function loadHistory() {
-  const res = await fetch("/history");
-  const msgs = await res.json();
-  chatBox.innerHTML = "";
-  msgs.forEach(m => addMessage(m.user, m.text));
-}
