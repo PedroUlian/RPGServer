@@ -175,6 +175,15 @@ body {
   transform: scale(1.2);
 }
 
+#chat-screen {
+  display: none !important;
+}
+
+#chat-screen.active {
+  display: flex !important;
+}
+
+
 /* ----- RESPONSIVIDADE ----- */
 @media (max-width: 768px) {
   .sidebar {
